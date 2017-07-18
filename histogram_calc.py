@@ -26,8 +26,9 @@ def test(image_path, mask_path):
     # cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    test(image_path="d:/Projects/SSIP/SSIP_17/e_optha_EX/EX/E0019457/C0001273.jpg",
-         mask_path="d:/Projects/SSIP/SSIP_17/e_optha_EX/Annotation_EX/E0019457/C0001273_EX.png")
+    test(image_path="C:/Users/NT1/Desktop/ssip/SSIP_17/e_optha_EX/EX/E0019457/C0001273.jpg",
+         mask_path="C:/Users/NT1/Desktop/ssip/SSIP_17/e_optha_EX/Annotation_EX/E0019457/C0001273_EX.png")
+
 
 
 
