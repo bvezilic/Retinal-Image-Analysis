@@ -49,7 +49,7 @@ def generate_descriptors(image, mask):
             x = random.randint(0, image.shape[1]-1)
             y = random.randint(0, image.shape[0]-1)
 
-            if is_background_point_considerable(x, y, mask):
+            if is_background_point_considerable(x, y, mask) and image[y, x] > 10:
                 got_point = True
                 break
 
