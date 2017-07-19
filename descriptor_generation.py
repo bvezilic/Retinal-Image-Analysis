@@ -2,25 +2,27 @@ import cv2
 import numpy as np
 import random
 import sklearn.svm as svm
+from sklearn.metrics import classification_report
+
 
 def is_mask_point_considerable(x, y, mask):
     if x - 2 >= 0 and x + 2 < mask.shape[1] and \
         y - 2 >= 0 and y + 2 < mask.shape[0]:
-        return sum(mask[y-2 : y+2, x-2:x+2]) >= 10
+        return np.sum(mask[y-2: y+2, x-2:x+2]) >= 10
     return False
 
 
 def is_background_point_considerable(x, y, mask):
     if x - 2 >= 0 and x + 2 < mask.shape[1] and \
         y - 2 >= 0 and y + 2 < mask.shape[0]:
-        return sum(mask[y-2 : y+2, x-2:x+2]) < 10
+        return np.sum(mask[y-2: y+2, x-2:x+2]) < 10
     return False
 
 
 def get_descriptor(image, x, y):
-    points = image[y-2:y+2, x-2:x+2, 1].flatten()
-    hist = cv2.calcHist([result], [0], None, [256], [0, 256])
-    return hist
+    points = image[y-2:y+2, x-2:x+2].flatten()
+    hist = cv2.calcHist([points], [0], None, [256], [0, 256])
+    return hist.reshape(-1)
 
 
 def generate_descriptors(image, mask):
@@ -31,7 +33,9 @@ def generate_descriptors(image, mask):
     labels = []
 
     # create lesion descriptors
-    for y, x in mask_points:
+    indices = random.sample(range(1, len(mask_points)), 100) if len(mask_points) > 100 else range(len(mask_points))
+    for idx in indices:  # for y, x in mask_points:
+        y, x = mask_points[idx]
         if is_mask_point_considerable(x, y, mask):
             descriptor = get_descriptor(image, x, y)
             descriptors.append(descriptor)
@@ -57,8 +61,10 @@ def generate_descriptors(image, mask):
     return descriptors, labels
 
 
-def train_model(descriptors, labels):
-    svm_model = svm.SVC(kernel='poly')
-    trained_model = svm_model.fit(descriptors, labels)
+def train_model(x_train, y_train, x_test, y_test):
+    svm_model = svm.SVC(kernel='poly', degree=2)
+    svm_model.fit(x_train, y_train)
+    y_pred = svm_model.predict(x_test)
+    print classification_report(y_test, y_pred)
 
-    return trained_model
+    return svm_model
