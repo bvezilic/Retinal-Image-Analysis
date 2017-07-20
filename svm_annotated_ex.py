@@ -2,8 +2,11 @@ import cv2
 import random
 import os.path as osp
 import numpy as np
+import pickle
 from sklearn.svm import SVC
 from sklearn.metrics import classification_report
+from sklearn.preprocessing import minmax_scale
+from sklearn.ensemble import RandomForestClassifier
 
 train_dir = '../exudates_data/train'
 test_dir = '../exudates_data/test'
@@ -56,7 +59,8 @@ def read_data(directory):
             # Calculate histogram for that region
             hist = cv2.calcHist([region], [0], None, [256], [0, 256])
             # Add histogram to data and label
-            x.append(hist.reshape(-1))
+            hist = hist.reshape(-1)/(region.shape[0] * region.shape[1])
+            x.append(hist)
             y.append(1)
 
         # Load negative samples
@@ -94,7 +98,22 @@ def load_data():
     return x_train, y_train, x_test, y_test
 
 
-def train_and_evaluate_model():
+def train_rf():
+    # Define model
+    rf = RandomForestClassifier(n_estimators=256)
+    # Load data
+    x_train, y_train, x_test, y_test = load_data()
+    # Train model
+    rf.fit(x_train, y_train)
+    # Predict on test data
+    y_pred = rf.predict(x_test)
+
+    print classification_report(y_test, y_pred)
+
+    pickle.dump(rf, open('rf_model.pkl', 'wb'))
+
+
+def train_svm():
     # Define model
     svm = SVC(kernel='poly', degree=2)
     # Load data
@@ -106,6 +125,35 @@ def train_and_evaluate_model():
 
     print classification_report(y_test, y_pred)
 
+    pickle.dump(svm, open('svm_model.pkl', 'wb'))
+
+
+def train_and_evaluate_model():
+    # train_svm()
+    train_rf()
+    # from sklearn.manifold import TSNE
+    # model = TSNE(n_components=2, random_state=0)
+    # pos = model.fit_transform(x_train)
+    # import matplotlib.pyplot as plt
+    # plt.figure(1)
+    # y_train = np.array(y_train)
+    # plt.scatter(pos[y_train == 1, 0], pos[y_train == 1, 1], marker='o', color='b')
+    # plt.scatter(pos[y_train == 0, 0], pos[y_train == 0, 1], marker='o', color='g')
+    # plt.title('Exudate -- blue, background -- green')
+    # plt.savefig('tsne_vis.png')
+    # plt.show()
+
+
+def get_descriptor(region):
+    hist = cv2.calcHist([region], [0], None, [256], [0, 256])
+    # desc = minmax_scale(hist.reshape(-1))
+    desc = hist.reshape(-1)/(region.shape[0] * region.shape[1])
+    return desc
+
+
+def prediction(region, model):
+    result = model.predict(get_descriptor(region))
+    return result
 
 if __name__ == '__main__':
     train_and_evaluate_model()
